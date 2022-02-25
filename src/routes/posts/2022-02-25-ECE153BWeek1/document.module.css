@@ -1,0 +1,13 @@
+.logo {
+  position: relative;
+  height: 256px;
+  left: 0;
+  margin: 0 auto;
+  width: 512px;
+  overflow: hidden;
+}
+
+.mainPhoto {
+  height: 256px;
+  position: absolute;
+}
