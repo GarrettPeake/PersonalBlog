@@ -1,4 +1,5 @@
 import styles from './document.module.css'
+import projectPhoto from './projectPhoto.jpg'
 
 <div className={styles["Welcome"]}>
 
@@ -6,60 +7,50 @@ import styles from './document.module.css'
   <img src={projectPhoto} className={styles["mainPhoto"]} alt="logo" />
 </div>
 
+## Intro to the project
+
+The goal is to create a game where physically tilting the device causes a virtual ball to roll around on the screen  
+
+The target of the game is to navigate the ball to a target while avoiding 'pits'
+
 ## Getting started  
 
 This week I stitched together code from lab 4 to enable SysTick interrupts, I2C communication, and SPI communication.  
 
 I hardcoded the correct I2C module into the code since it's the only one I'm using and found the commands to enable measurement on the accelerometer
 
+After soldering on the header rows for the accelerometer and the display I was able to wire the I2C bus on the accelerometer to pins B6 and B7 on the
+Nucleo board.
+
+The following command enables the measurement mode of the accelerometer:
 ```c
-void test(){};
+// Write 0x08 to register 0x2D (POWER_CTL) to enable measurement
+uint8_t powerCTLCFG[] = {0x2D, 0x08};
+I2C_SendData(ACCELEROMETER, powerCTLCFG, 2);
 ```
 
-**To update this post,** edit `src/pages/posts/2019-01-05-welcome/document.mdx` and save to reload.
+Then we can read registers `0x32` through `0x37` to receive the high and low bits for the X, Y, & Z axes. Dividing these values by 256 to
+scales them to be in units of 1g.
 
-**To update the site's title,** edit the metadata in `src/siteMetadata.js`.
-
-**To your bio and photo,** edit the Bio component in `src/components/Bio.js`.
-
-<!--**To learn how to build your own JAMStack app**, join the [React In Practice](https://frontarm.com/courses/react-in-practice/) course by [James K Nelson](https://twitter.com/james_k_nelson), where you'll build this blog from scratch.-->
-
-**To change the site's colors,** edit the `:root` block in `src/index.module.css`.
-
-**To create a new post,** add a new directory to `src/pages/posts` that is prefixed with the new post's publication date, then create a `post.js` file inside it:
-
-```jsx
-export default {
-  title: `Learn How To Build This Blog From Scratch`,
-  tags: ['react', 'navi'],
-  spoiler: "An online course with loads of live demos and exercises.",
-  getContent: () => import('./document.mdx'),
+```c
+void updateAccelerationValues(){	
+	// Set the base address of our reads
+	uint8_t measurementRegistersBase[] = {0x32U};
+	I2C_SendData(ACCELEROMETER, measurementRegistersBase, 1);
+	
+	// Read register 0x32-0x37 for accelerometer data
+	uint8_t data[6];
+	I2C_ReceiveData(ACCELEROMETER, data, 6);
+	
+	// Combine readings into 16bits and divide each by 256
+	accx = (int16_t)(data[0] | (data[1] << 8)) / 256.0;
+	accy = (int16_t)(data[2] | (data[3] << 8)) / 256.0;
+	accz = (int16_t)(data[4] | (data[5] << 8)) / 256.0;
 }
 ```
+Before dividing by 256 we convert to a `uint16_t` to sign the values. The they are stored in global scope variables.  
 
-**To set the maximum number of posts on an index page,**, set the `indexPageSize` property of the object exported by `src/siteMetadata.js`.
+Using the debugger watch window I was able to see the 3 axes properly changing meaning the this device is fully working.  
 
-**To modify the generated HTML,** update the `src/renderPageToString.js` file.
-
-**To add non-blog pages,** just use [`Navi.createPage()`](https://frontarm.com/navi/reference/declarations/#createpage), [`Navi.createSwitch()`](https://frontarm.com/navi/reference/declarations/#createswitch) and [`Navi.createRedirect()`](https://frontarm.com/navi/reference/declarations/#createredirect). For an example, check the about page at `src/pages/about/index.js`. If you create a page, remember to add it to the root switch at `src/pages/index.js`.
-
-**To brush up on React's fundamentals,** check out the [React (without the buzzwords)](https://frontarm.com/courses/learn-raw-react/) and [Asynchronous JavaScript](https://frontarm.com/courses/async-javascript/) courses.
-
-
-##  The lowdown
-
-This template is designed with a JAMstack architecture. This means that the blog is statically rendered for the fastest possible load time, but once loaded, it turns into a single page app -- ensuring navigation is silky smooth.
-
-It follows a convention-over-configuation philosophy. It should work out of the box with minimal effort for most people's needs, but can also be configured where required.
-
-Finally, an effort has been made to prefer explicit code over concise code, and simplicity over complexity. Magic is avoided wherever possible, even if this means more code is required for the desired result.
-
-
-## The tools
-
-- [React](https://reactjs.org) renders the UI
-- [MDX](https://mdxjs.com) converts markdown into React components
-- [Navi](https://frontarm.com/navi/) handles routing and creates static HTML files for each route
-- [create-react-app](https://reactjs.org/docs/create-a-new-react-app.html) builds the app's assets and provides the dev server
-
+My plan for the next two weeks is to get the display running and drawing circles (pits and balls) during week 9 and implement game logic for week 10.
 </div>
