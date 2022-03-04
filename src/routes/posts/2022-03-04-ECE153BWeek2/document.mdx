@@ -1,0 +1,86 @@
+import styles from './document.module.css'
+import projectPhoto from './projectPhoto.jpg'
+
+<div className={styles["Welcome"]}>
+
+<div className={styles["logo"]}>
+  <img src={projectPhoto} className={styles["mainPhoto"]} alt="logo" />
+</div>
+
+## SPI LCD Display
+
+The goal for this week was to begin interfacing with the SPI LCD display  
+
+The display runs on the ST7735R driver. There's multiple libraries available for the device but all for different platforms  
+
+It took me a while to figure out the wiring since we've only interacted with 3-wire SPI and this requires 5: MISO, MOSI, SCK, D/C, TFT_CS  
+
+I procrastinated this week and didn't manage to achieve the goal of displaying anything so will be debugging throughout the coming week
+
+## Getting started  
+
+Using the SPI GPIO setup code from Lab 3 I wrote two new functions to send data and to send commands.
+
+```c
+void SPI_Write_Data(uint8_t data){
+	uint8_t* doof;
+	// Pull D/C high for data
+	GPIOB->ODR |= 0x1U << 2;
+	// Transfer the data
+	SPI_Transfer_Byte(data, doof);
+}
+```
+
+```c
+void SPI_Write_Command(uint8_t command){
+	uint8_t* doof;
+	// Pull D/C low for command
+	GPIOB->ODR &= ~(0x1U << 2);
+	// Transfer the command
+	SPI_Transfer_Byte(command, doof);
+}
+```
+
+I originally tied the TFT_CS to low but looking at the timing diagram from the (datasheet)[https://cdn-shop.adafruit.com/datasheets/ST7735R_V0.2.pdf]
+I saw that it also needed to be modulated. I made the same mistake with the D/C pin before I realized its purpose. I made many mistakes during the
+wiring process on this board.
+
+I found a startup sequence from the Adafruit ST7735 library and ported it to work with my scheme
+
+Then I found a basic drawing scripts for this driver from (this github)[https://github.com/juj/ST7735R]
+
+```c
+void begin_rect(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1){
+	SPI_Write_Command(ST77XX_CASET); // Column address set
+	SPI_Write_Data(0);  //XSTART[15:8]
+	SPI_Write_Data(x0); //XSTART[7:0]
+	SPI_Write_Data(0);  //XEND[15:8]
+	SPI_Write_Data(x1); //XEND[7:0]
+	SPI_Write_Command(ST77XX_RASET);
+	SPI_Write_Data(0);  //YSTART[15:8]
+	SPI_Write_Data(y0); //YSTART[7:0]
+	SPI_Write_Data(0);  //YEND[15:8]
+	SPI_Write_Data(y1); //YEND[7:0]
+	SPI_Write_Command(ST77XX_RAMWR); // RAM Write
+}
+
+void begin_pixels(){
+	begin_rect(0, 0, ST7735R_WIDTH-1, ST7735R_HEIGHT-1);
+}
+
+void pixel(uint16_t x, uint16_t y, uint8_t red, uint8_t green, uint8_t blue){
+	uint8_t hi = HI8_RGB24(red, green, blue);
+	SPI_Write_Command(ST77XX_RAMWR);
+	SPI_Write_Data(hi);
+	uint8_t lo = LO8_RGB24(red, green, blue);
+	SPI_Write_Data(lo);
+}
+```
+
+All of this comes with many steps of debugging, porting, and refactoring in between.
+
+After running the above code the SPI bus gets stuck waiting for the busy flag to become unset suggesting that the communication is the problem.
+
+The plan until the project is due to is attempt to debug for at least an hour each day to get the display working and I believe the game logic won't
+very long
+</div>
