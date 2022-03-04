@@ -41,13 +41,13 @@ void SPI_Write_Command(uint8_t command){
 }
 ```
 
-I originally tied the TFT_CS to low but looking at the timing diagram from the (datasheet)[https://cdn-shop.adafruit.com/datasheets/ST7735R_V0.2.pdf]
+I originally tied the TFT_CS to low but looking at the timing diagram from the [datasheet](https://cdn-shop.adafruit.com/datasheets/ST7735R_V0.2.pdf)
 I saw that it also needed to be modulated. I made the same mistake with the D/C pin before I realized its purpose. I made many mistakes during the
 wiring process on this board.
 
 I found a startup sequence from the Adafruit ST7735 library and ported it to work with my scheme
 
-Then I found a basic drawing scripts for this driver from (this github)[https://github.com/juj/ST7735R]
+Then I found a basic drawing scripts for this driver from [this github](https://github.com/juj/ST7735R)
 
 ```c
 void begin_rect(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1){
