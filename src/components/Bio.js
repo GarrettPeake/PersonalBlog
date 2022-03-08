@@ -1,26 +1,21 @@
 import React from 'react'
 import styles from './Bio.module.css'
-import { getGravatarURL } from '../utils/getGravatarURL'
+import flowChart from './flowchart.jpg'
 
 function Bio(props) {
-  let photoURL = getGravatarURL({
-    email: "gepeake@gmail.com",
-    size: 64,
-  })
 
   return (
     <div className={`
       ${styles.Bio}
       ${props.className || ''}
     `}>
-      <img src={photoURL} alt="Me" />
       <p>
-        Currently just the groundwork for an eventual portfolio site
+        I'm making a tilting plane, or gravity tilt game. Using an I2C accelerometer and an SPI LCD display along with the NUCLEO board, the user will
+        tilt the device to control a virtual ball on the display, the target is to navigate the ball into a goal 'hole' while avoiding the numerous 'pits.'
         <br />
-        Visit my GitHub at{' '}
-        <a href="https://www.github.com/GarrettPeake">GarrettPeake</a>.
-        <br />
+        I'm working alone on this project.
       </p>
+      <img src={flowChart} alt="flowChart" />
     </div>
   )
 }

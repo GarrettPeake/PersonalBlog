@@ -1,0 +1,76 @@
+import styles from './document.module.css'
+import projectPhoto from './projectPhoto.jpg'
+
+<div className={styles["Welcome"]}>
+
+<div className={styles["logo"]}>
+  <img src={projectPhoto} className={styles["mainPhoto"]} alt="logo" />
+</div>
+
+## Saturday 3/5
+
+After studying the Adafruit and Github libraries for the display I've debugged and seemingly have a startup sequence working.
+
+I configured SPI what seems to be correctly, even though it uses 4 wires, data is transferred on a single wire bidirectionally.
+
+I began using pin PB2 as a chip select and PB5 as data/command select. To begin interaction, you pull the chip select low (serial communication is
+initialized while it's high) then we can transmit a byte of information and the D/C pin will be sampled on the 8th byte, if we want to keep transmitting
+just don't bring the chip select back up and we can transmit more commands, arguments, and data. Finally to end a transfer just bring the chip select high again
+
+To run the display, you must take it out of sleep mode, set some settings, and set the column and row address space. After setting the address space,
+just send the RAMWR command and you can begin writing color values to the bus. These colors will be converted into pixels based on the configured 12/16/24
+bit color space. I'm using 16 bit so I write 5 red bits, 6 green bits, and 5 blue bits. After each 16 bits are written the cursor indexes one step in reading
+direction.
+
+The code still does not display anything, tomorrow I will make sure PB2/5 are outputting correctly.
+
+## Sunday 3/6
+
+Today I've confirmed that the chip select and D/C pins are correctly modulating and are in the correct states based on the values I'm trying to write.
+After running the setup commands I found on ADAFRUIT I begin writing.
+
+Note: I missed a third portion of the startup command scripts and just successfully got the screen to display blue!
+
+I can now write pixels continuously to the screen and after decreasing the SPI prescaler have a reasonably fast framerate. I can then write some utilities
+to let me draw circles for the pits and the ball.
+
+```c
+void write_frame(){
+	SPI_init_transfer();
+	SPI_Write_Command(ST77XX_RAMWR); // Start writing to RAM
+	for(int i = 0; i < ST7735R_WIDTH*ST7735R_HEIGHT; i++){ // Write the colors for each pixel in the buffer
+		SPI_Write_Data((uint8_t)(frame_data[i] >> 8));
+		SPI_Write_Data((uint8_t)(frame_data[i]));
+	}
+	SPI_end_transfer();
+}
+
+void set_pixel(uint16_t x, uint16_t y, uint16_t color){
+	frame_data[y*ST7735R_WIDTH + x] = color;
+}
+
+void clear_buffer(uint16_t color){
+	for(uint16_t x = 0; x < ST7735R_WIDTH; x++){
+		for(uint16_t y = 0; y < ST7735R_HEIGHT; y++){
+			set_pixel(x, y, color);
+		}
+	}
+}
+void set_circle(uint16_t x, uint16_t y, uint8_t rad, uint16_t color){
+	for(uint16_t cx =   MAX(0, x-rad); cx < MIN(ST7735R_WIDTH,  x+rad); cx++){
+		for(uint16_t cy = MAX(0, y-rad); cy < MIN(ST7735R_HEIGHT, y+rad); cy++){
+			if(rad*rad > MAX(x-cx, cx-x)*MAX(x-cx, cx-x) + MAX(y-cy, cy-y)*MAX(y-cy, cy-y)){
+				set_pixel(cx, cy, color);
+			}
+		}
+	}
+}
+```
+
+Using the above code, during each frame we can wipe the canvas using clear_buffer, draw our circles using set_circle, draw singles pixels if we like, and
+then write the entire buffer to the display using write_frame.
+
+Interestingly, the datasheet claims that in 16bit RGB red comes first and blue last, but when interacting with it, it appears that blue must come first.
+
+Over the next few days I will be implementing the game logic and integrating the accelerometer back in.
+</div>
