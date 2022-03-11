@@ -14,7 +14,7 @@ function BlogIndexPage({ blogRoot, pageCount, pageNumber, postRoutes }) {
           <Link href={blogRoot}>{siteMetadata.title}</Link>
         </h1>
         <Bio />
-        <iframe width="1984" height="1078" src="https://www.youtube.com/embed/kFC0XVwfNog" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <iframe src="https://www.youtube.com/embed/kFC0XVwfNog" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
       </header>
       <ul className={styles.articlesList}>
         {postRoutes.map(route => (
